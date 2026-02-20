@@ -9,18 +9,25 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [files, setFiles] = useState<any[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
+
   async function fetchFiles() {
     setLoadingFiles(true);
-    const res = await fetch('/api/documents/list');
-    const data = await res.json();
-    if (res.ok) {
-      setFiles(data.files || []);
-    } else {
-      setStatus(`取得檔案失敗：${data.error}`);
+    try {
+      const res = await fetch('/api/documents/list');
+      const data = await res.json();
+      if (res.ok) {
+        setFiles(data.files || []);
+      } else {
+        setStatus(`取得檔案失敗：${data.error}`);
+      }
+    } catch (error) {
+      setStatus(`取得檔案失敗：${error}`);
     }
     setLoadingFiles(false);
   }
 
+  // 暫時註解掉刪除功能，因為沒有對應的 API
+  /*
   async function handleDelete(path: string) {
     if (!window.confirm('確定要刪除這個檔案嗎？')) return;
     setStatus('刪除中...');
@@ -37,6 +44,7 @@ export default function Home() {
       setStatus(`刪除失敗：${data.error}`);
     }
   }
+  */
 
   // 首次載入時取得檔案列表
   React.useEffect(() => {
@@ -45,9 +53,13 @@ export default function Home() {
 
   async function checkBackend() {
     setStatus("Checking backend...");
-    const res = await fetch('/api/health');
-    const data = await res.json();
-    setStatus(`Backend says: ${data.message}`);
+    try {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      setStatus(`Backend says: ${data.message}`);
+    } catch (error) {
+      setStatus(`Backend error: ${error}`);
+    }
   }
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
@@ -60,23 +72,29 @@ export default function Home() {
     setStatus("Uploading...");
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('/api/documents/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setStatus(`上傳成功：${data.path}`);
-    } else {
-      setStatus(`上傳失敗：${data.error}`);
+    try {
+      const res = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus(`上傳成功：${data.path}`);
+        fetchFiles(); // 重新整理檔案列表
+      } else {
+        setStatus(`上傳失敗：${data.error}`);
+      }
+    } catch (error) {
+      setStatus(`上傳失敗：${error}`);
     }
     setUploading(false);
   }
 
-
   return (
     <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 800 }}>
       <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: '#1d324b' }}>AI Summary App</h1>
+      
+      {/* 上傳表單 */}
       <form onSubmit={handleUpload} style={{ marginBottom: 24 }}>
         <label style={{ fontWeight: 'bold', marginRight: 8 }}>上傳文件（txt/PDF）:</label>
         <input
@@ -88,11 +106,21 @@ export default function Home() {
         <button
           type="submit"
           disabled={uploading}
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
+          style={{
+            backgroundColor: uploading ? '#9CA3AF' : '#059669',
+            color: 'white',
+            fontWeight: 600,
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: 'none',
+            cursor: uploading ? 'not-allowed' : 'pointer'
+          }}
         >
-          {uploading ? 'Uploading...' : 'Upload'}
+          {uploading ? '上傳中...' : '上傳'}
         </button>
       </form>
+
+      {/* 文件列表 */}
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: 8 }}>文件列表</h2>
         {loadingFiles ? (
@@ -102,9 +130,10 @@ export default function Home() {
         ) : (
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {files.map(f => {
-              const ext = f.name.split('.').pop();
+              const ext = f.name.split('.').pop()?.toLowerCase();
               return (
                 <li key={f.name} style={{ marginBottom: 8, display: 'flex', alignItems: 'center' }}>
+                  {/* PDF 檔案連結 */}
                   {ext === 'pdf' ? (
                     <a
                       href={`/documents/${encodeURIComponent(f.name)}`}
@@ -115,33 +144,49 @@ export default function Home() {
                   ) : (
                     <span style={{ flex: 1 }}>{f.name}</span>
                   )}
+                  
+                  {/* 摘要按鈕 */}
                   <a
                     href={`/documents/${encodeURIComponent(f.name)}/summary`}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded"
-                    style={{ marginLeft: 8, textDecoration: 'none' }}
+                    style={{
+                      marginLeft: 8,
+                      backgroundColor: '#4B5563',
+                      color: 'white',
+                      fontWeight: 600,
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      textDecoration: 'none'
+                    }}
                   >
                     摘要
                   </a>
-                  <button
-                    onClick={() => handleDelete(`documents/${f.name}`)}
-                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded"
-                    style={{ marginLeft: 8 }}
-                  >
-                    刪除
-                  </button>
                 </li>
               );
             })}
           </ul>
         )}
       </div>
+
+      {/* 後端檢查按鈕 */}
       <button 
         onClick={checkBackend}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+        style={{
+          backgroundColor: '#2563EB',
+          color: 'white',
+          fontWeight: 600,
+          padding: '8px 16px',
+          borderRadius: '4px',
+          border: 'none',
+          cursor: 'pointer'
+        }}
       >
         Check backend
       </button>
-      <p style={{ marginTop: 12 }}>{status}</p>
+      
+      {/* 狀態訊息 */}
+      <p style={{ marginTop: 12, color: status.includes('失敗') ? 'red' : 'inherit' }}>
+        {status}
+      </p>
     </div>
   );
 }
