@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.97.0",
+    "@types/next": "^8.0.7",
+    "@types/pdf-parse": "^1.1.5",
+    "@types/react": "^19.2.14",
+    "next": "^16.1.6",
+    "pdf-parse": "^2.4.5",
+    "react": "^19.2.4"
+  }
+}
