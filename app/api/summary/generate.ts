@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import { generateSummary } from '@/lib/googleAiClient';
+import { generateDetailedSummary } from '@/lib/localSummaryEngine';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -9,7 +9,12 @@ export async function POST(request: Request) {
   }
   
   try {
-    const summary = await generateSummary(text, requirement || '', language || 'English');
+    const { summary } = generateDetailedSummary(
+      text,
+      0.30,
+      requirement || '',
+      language || 'English'
+    );
 
     // 儲存到 Supabase Summary bucket
     const { error } = await supabase.storage
@@ -21,7 +26,7 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ summary });
+    return NextResponse.json({ summary, provider: 'Local NLP Engine' });
   } catch (error) {
     console.error('Summary generation error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary';

@@ -22,6 +22,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File size exceeds 50MB limit' }, { status: 400 });
     }
 
+    console.log(`Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
+
     // Upload to Supabase Storage Document bucket
     const { data, error } = await supabase.storage
       .from('Document')
@@ -31,12 +33,25 @@ export async function POST(request: Request) {
       });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Error uploading file:', {
+        message: error.message,
+        status: error.status,
+        statusCode: error.statusCode,
+      });
+      return NextResponse.json(
+        { 
+          error: error.message,
+          details: 'Failed to upload file to Supabase. Please ensure: 1) The "Document" bucket exists in Supabase, 2) The bucket has write access, 3) Environment variables are correct.'
+        },
+        { status: 500 }
+      );
     }
 
+    console.log(`File uploaded successfully: ${data.path}`);
     return NextResponse.json({ path: data.path, success: true });
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

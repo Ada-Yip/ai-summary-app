@@ -16,6 +16,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
     }
 
+    console.log(`Extracting text from PDF: ${path}`);
+
     // Get the file from Supabase storage directly using authenticated method
     const { data: fileData, error: downloadError } = await supabase.storage
       .from('Document')
@@ -23,7 +25,13 @@ export async function POST(request: Request) {
     
     if (downloadError || !fileData) {
       console.error('Supabase download error:', downloadError);
-      return NextResponse.json({ error: `Failed to download file: ${downloadError?.message || 'Unknown error'}` }, { status: 500 });
+      return NextResponse.json(
+        { 
+          error: `Failed to download file: ${downloadError?.message || 'Unknown error'}`,
+          details: 'Ensure the file exists in the "Document" bucket and has proper permissions.'
+        },
+        { status: 500 }
+      );
     }
 
     // Convert blob to buffer
@@ -51,6 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No text found in PDF' }, { status: 400 });
     }
     
+    console.log(`Successfully extracted ${pdfData.text.length} characters from PDF`);
     return NextResponse.json({ text: pdfData.text });
   } catch (error) {
     console.error('Error extracting PDF text:', error);

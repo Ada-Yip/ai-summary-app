@@ -14,22 +14,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
     }
 
+    console.log(`Getting public URL for: ${path}`);
+
     // Get the public URL
     const { data } = supabase.storage
       .from('Document')
       .getPublicUrl(path);
 
     if (!data?.publicUrl) {
-      return NextResponse.json({ error: 'Failed to generate file URL' }, { status: 500 });
+      console.error('Failed to generate public URL for:', path);
+      return NextResponse.json(
+        { 
+          error: 'Failed to generate file URL',
+          details: 'The file may not exist or the bucket may not have public access enabled.'
+        },
+        { status: 500 }
+      );
     }
 
     // Verify the URL is valid
     try {
       new URL(data.publicUrl);
     } catch (e) {
+      console.error('Invalid URL generated:', data.publicUrl);
       return NextResponse.json({ error: 'Generated URL is invalid' }, { status: 500 });
     }
 
+    console.log(`Generated public URL: ${data.publicUrl}`);
     return NextResponse.json({ publicUrl: data.publicUrl });
     
   } catch (error) {

@@ -9,6 +9,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing documentName or summary' }, { status: 400 });
     }
 
+    console.log(`Updating summary for: ${documentName}, length: ${summary.length}`);
+
     // Save the updated summary to Supabase
     const summaryFileName = `summaries/${documentName}.txt`;
     const { error } = await supabase.storage
@@ -19,12 +21,25 @@ export async function POST(request: Request) {
       });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Error updating summary in Supabase:', {
+        message: error.message,
+        status: error.status,
+        statusCode: error.statusCode,
+      });
+      return NextResponse.json(
+        { 
+          error: error.message,
+          details: 'Failed to save summary. Ensure the "Summary" bucket exists in Supabase.'
+        },
+        { status: 500 }
+      );
     }
 
+    console.log(`Summary updated successfully: ${summaryFileName}`);
     return NextResponse.json({ success: true, message: 'Summary updated successfully' });
   } catch (error) {
     console.error('Error updating summary:', error);
-    return NextResponse.json({ error: 'Failed to update summary' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update summary';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

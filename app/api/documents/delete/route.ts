@@ -24,18 +24,22 @@ export async function POST(request: Request) {
     }
 
     // Also try to delete the associated summary if it exists
+    // Extract document name from path (e.g., "documents/file.pdf" -> "file.pdf")
     const docName = path.split('/').pop();
     if (docName) {
       try {
-        await supabase.storage
+        const { error: summaryError } = await supabase.storage
           .from('Summary')
-          .remove([`summaries/${docName}.txt`])
-          .catch((err) => {
-            console.warn('Summary deletion warning:', err);
-            // Ignore errors if summary doesn't exist
-          });
-      } catch (summaryError) {
-        console.warn('Could not delete associated summary:', summaryError);
+          .remove([`summaries/${docName}.txt`]);
+        
+        if (summaryError) {
+          console.warn('Summary deletion warning:', summaryError.message);
+          // Ignore errors if summary doesn't exist - this is expected behavior
+        } else {
+          console.log(`Associated summary deleted for: ${docName}`);
+        }
+      } catch (summaryDeleteError) {
+        console.warn('Could not delete associated summary:', summaryDeleteError);
         // Don't fail the whole operation if summary deletion fails
       }
     }
