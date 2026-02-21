@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import { generateSummary } from '@/lib/ollamaClient';
+import { generateSummary } from '@/lib/googleAiClient';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing documentName or text' }, { status: 400 });
     }
 
-    // Generate summary using Ollama (local AI without API keys)
+    // Generate summary using Google Generative AI (Gemini)
     const summary = await generateSummary(text, requirement || '', language || 'English');
 
     // Save to Supabase Summary bucket

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import { generateSummary } from '@/lib/ollamaClient';
+import { generateSummary } from '@/lib/googleAiClient';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -27,3 +27,4 @@ export async function POST(request: Request) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
+}

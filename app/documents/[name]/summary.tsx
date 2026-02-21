@@ -25,30 +25,22 @@ export default function SummaryPage() {
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for entire operation
       
       try {
-        // Get the file URL
-        const urlRes = await fetch(`/api/documents/get-url`, {
+        // Download the file content from server-side API
+        const downloadRes = await fetch(`/api/documents/download`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ path: `documents/${name}` }),
           signal: controller.signal,
         });
         
-        const urlData = await urlRes.json();
-        if (!urlRes.ok || !urlData.publicUrl) {
-          setError(urlData.error || "Failed to get file URL");
+        const downloadData = await downloadRes.json();
+        if (!downloadRes.ok || !downloadData.text) {
+          setError(downloadData.error || "Failed to download file");
           setLoading(false);
           return;
         }
         
-        // Fetch the file content
-        const txtRes = await fetch(urlData.publicUrl, { signal: controller.signal });
-        if (!txtRes.ok) {
-          setError("Failed to download file");
-          setLoading(false);
-          return;
-        }
-        
-        const txt = await txtRes.text();
+        const txt = downloadData.text;
         setText(txt);
         
         // Call the summary API
