@@ -1,10 +1,5 @@
-import { OpenAI } from 'openai';
 import { supabase } from '@/lib/supabaseClient';
 import { NextResponse } from 'next/server';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(request: Request) {
   try {
@@ -14,33 +9,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing documentName or text' }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
-    }
-
-    // Build the prompt based on language and requirements
-    let languageName = 'English';
-    if (language === 'zh') languageName = 'Chinese';
-    if (language === 'ja') languageName = 'Japanese';
-
-    const prompt = requirement
-      ? `Please summarize the following text in ${languageName}. Additional requirements: ${requirement}\n\nText:\n${text}`
-      : `Please summarize the following text in ${languageName}.\n\nText:\n${text}`;
-
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    const summary = completion.choices[0]?.message?.content || 'No summary generated';
+    // Since OpenAI API is not available, return a message about manual summarization
+    const summary = `[Summary generation is not available without OpenAI API]\n\nDocument: ${documentName}\nLanguage: ${language || 'English'}\n${requirement ? `Requirements: ${requirement}` : ''}\n\nPlease manually create a summary of the document.`;
 
     // Save to Supabase Summary bucket
     const summaryFileName = `summaries/${documentName}.txt`;

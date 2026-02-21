@@ -22,7 +22,16 @@ export default function Home() {
     setLoadingFiles(true);
     try {
       const res = await fetch('/api/documents/list');
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        setStatus(`Error loading documents: Invalid JSON response`);
+        setLoadingFiles(false);
+        console.error('API response is not valid JSON:', text);
+        return;
+      }
       if (res.ok) {
         setFiles(data.files || []);
         setStatus("Documents loaded successfully");
