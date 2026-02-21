@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -13,24 +15,21 @@ export default function DocumentPage() {
       setLoading(true);
       setError("");
       const ext = name.split('.').pop();
-      if (ext === "pdf") {
-        const res = await fetch("/api/documents/extract-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: `documents/${name}` }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setText(data.text);
+      try {
+        if (ext === "pdf") {
+          const res = await fetch("/api/documents/extract-text", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: `documents/${name}` }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setText(data.text);
+          } else {
+            setError(data.error || "Failed to extract text from PDF");
+          }
         } else {
-          setError(data.error);
-        }
-      } else {
-        // txt 檔案直接取得 public URL
-        const res = await fetch(`/api/documents/list`);
-        const data = await res.json();
-        const file = data.files.find((f: any) => f.name === name);
-        if (file) {
+          // TXT file: get public URL and fetch content
           const urlRes = await fetch(`/api/documents/get-url`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -42,23 +41,84 @@ export default function DocumentPage() {
             const txt = await txtRes.text();
             setText(txt);
           } else {
-            setError(urlData.error);
+            setError(urlData.error || "Failed to load file");
           }
-        } else {
-          setError("找不到檔案");
         }
+      } catch (err) {
+        setError(`Error loading document: ${err}`);
       }
       setLoading(false);
     }
     fetchText();
   }, [name]);
 
+  const decodedName = decodeURIComponent(name as string);
+
   return (
-    <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 800 }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#1d324b' }}>文件內容：{name}</h1>
-      {loading ? <p>載入中...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
-        <pre style={{ background: '#f5f5f5', padding: 16, borderRadius: 8, whiteSpace: 'pre-wrap' }}>{text}</pre>
-      )}
+    <div>
+      {/* Header */}
+      <div style={{
+        marginBottom: "2rem",
+        paddingBottom: "1rem",
+        borderBottom: "2px solid #e5e7eb"
+      }}>
+        <h1 style={{
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          marginBottom: '0.5rem',
+          color: '#1f2937'
+        }}>
+          Document: {decodedName}
+        </h1>
+        <p style={{
+          color: '#6b7280',
+          margin: 0
+        }}>
+          Viewing document content
+        </p>
+      </div>
+
+      {/* Content Area */}
+      <div style={{
+        padding: "1.5rem",
+        backgroundColor: "#ffffff",
+        borderRadius: "8px",
+        border: "1px solid #e5e7eb",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+      }}>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "2rem" }}>
+            <p style={{ color: '#6b7280' }}>Loading document...</p>
+          </div>
+        ) : error ? (
+          <div style={{
+            padding: "1rem",
+            backgroundColor: "#fee2e2",
+            borderLeft: "4px solid #ef4444",
+            borderRadius: "4px",
+            color: "#7f1d1d"
+          }}>
+            <p style={{ margin: 0 }}>Error: {error}</p>
+          </div>
+        ) : (
+          <pre style={{
+            background: '#f9fafb',
+            padding: '1rem',
+            borderRadius: '8px',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+            overflow: 'auto',
+            maxHeight: '600px',
+            margin: 0,
+            fontFamily: 'monospace',
+            fontSize: '0.875rem',
+            lineHeight: '1.5',
+            color: '#1f2937'
+          }}>
+            {text}
+          </pre>
+        )}
+      </div>
     </div>
   );
 }
