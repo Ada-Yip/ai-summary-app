@@ -1,7 +1,12 @@
 import { supabase } from '@/lib/supabaseClient';
 import { NextResponse } from 'next/server';
 
-const pdf = require('pdf-parse');
+let pdf: any;
+try {
+  pdf = require('pdf-parse');
+} catch (e) {
+  console.warn('pdf-parse not available, will use fallback');
+}
 
 export async function POST(request: Request) {
   try {
@@ -11,27 +16,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
     }
 
-    // Get the public URL for the PDF
-    const { data } = supabase.storage.from('Document').getPublicUrl(path);
+    // Get the file from Supabase storage directly using authenticated method
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from('Document')
+      .download(path);
     
-    if (!data?.publicUrl) {
-      return NextResponse.json({ error: 'Failed to get file URL' }, { status: 500 });
+    if (downloadError || !fileData) {
+      console.error('Supabase download error:', downloadError);
+      return NextResponse.json({ error: `Failed to download file: ${downloadError?.message || 'Unknown error'}` }, { status: 500 });
     }
 
-    // Download the PDF file
-    const pdfRes = await fetch(data.publicUrl);
-    if (!pdfRes.ok) {
-      return NextResponse.json({ error: 'Failed to download PDF file' }, { status: 500 });
+    // Convert blob to buffer
+    const pdfBuffer = await fileData.arrayBuffer();
+    
+    // Check if buffer is empty
+    if (pdfBuffer.byteLength === 0) {
+      return NextResponse.json({ error: 'PDF file is empty' }, { status: 400 });
+    }
+
+    // Parse PDF text with error handling
+    if (!pdf) {
+      return NextResponse.json({ error: 'PDF parsing library not available' }, { status: 500 });
+    }
+
+    let pdfData;
+    try {
+      pdfData = await pdf(Buffer.from(pdfBuffer));
+    } catch (parseError) {
+      console.error('PDF parsing failed:', parseError);
+      return NextResponse.json({ error: 'Failed to parse PDF file - it may be corrupted or invalid' }, { status: 400 });
     }
     
-    const pdfBuffer = await pdfRes.arrayBuffer();
-
-    // Parse PDF text
-    const pdfData = await pdf(Buffer.from(pdfBuffer));
+    if (!pdfData?.text) {
+      return NextResponse.json({ error: 'No text found in PDF' }, { status: 400 });
+    }
     
     return NextResponse.json({ text: pdfData.text });
   } catch (error) {
     console.error('Error extracting PDF text:', error);
-    return NextResponse.json({ error: 'Failed to extract text from PDF' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to extract text from PDF';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

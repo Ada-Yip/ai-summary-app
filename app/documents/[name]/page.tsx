@@ -15,39 +15,75 @@ export default function DocumentPage() {
       setLoading(true);
       setError("");
       const ext = name.split('.').pop();
+      
       try {
         if (ext === "pdf") {
-          const res = await fetch("/api/documents/extract-text", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: `documents/${name}` }),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            setText(data.text);
-          } else {
-            setError(data.error || "Failed to extract text from PDF");
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for entire PDF operation
+          
+          try {
+            const res = await fetch("/api/documents/extract-text", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path: `documents/${name}` }),
+              signal: controller.signal,
+            });
+            
+            const data = await res.json();
+            if (res.ok && data.text) {
+              setText(data.text);
+            } else {
+              setError(data.error || "Failed to extract text from PDF");
+            }
+          } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') {
+              setError("PDF loading timed out. The file may be too large or corrupted.");
+            } else {
+              setError(`Error loading PDF: ${err instanceof Error ? err.message : err}`);
+            }
+          } finally {
+            clearTimeout(timeoutId);
           }
         } else {
-          // TXT file: get public URL and fetch content
-          const urlRes = await fetch(`/api/documents/get-url`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: `documents/${name}` }),
-          });
-          const urlData = await urlRes.json();
-          if (urlRes.ok && urlData.publicUrl) {
-            const txtRes = await fetch(urlData.publicUrl);
-            const txt = await txtRes.text();
-            setText(txt);
-          } else {
-            setError(urlData.error || "Failed to load file");
+          // TXT file: get public URL and fetch content with timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout for entire TXT operation
+          
+          try {
+            const urlRes = await fetch(`/api/documents/get-url`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path: `documents/${name}` }),
+              signal: controller.signal,
+            });
+            
+            const urlData = await urlRes.json();
+            if (urlRes.ok && urlData.publicUrl) {
+              const txtRes = await fetch(urlData.publicUrl, { signal: controller.signal });
+              if (txtRes.ok) {
+                const txt = await txtRes.text();
+                setText(txt);
+              } else {
+                setError("Failed to download file");
+              }
+            } else {
+              setError(urlData.error || "Failed to load file");
+            }
+          } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') {
+              setError("File loading timed out.");
+            } else {
+              setError(`Error loading document: ${err instanceof Error ? err.message : err}`);
+            }
+          } finally {
+            clearTimeout(timeoutId);
           }
         }
       } catch (err) {
-        setError(`Error loading document: ${err}`);
+        setError(`Error loading document: ${err instanceof Error ? err.message : err}`);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchText();
   }, [name]);

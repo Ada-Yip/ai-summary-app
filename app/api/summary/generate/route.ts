@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { generateSummary } from '@/lib/ollamaClient';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -9,8 +10,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing documentName or text' }, { status: 400 });
     }
 
-    // Since OpenAI API is not available, return a message about manual summarization
-    const summary = `[Summary generation is not available without OpenAI API]\n\nDocument: ${documentName}\nLanguage: ${language || 'English'}\n${requirement ? `Requirements: ${requirement}` : ''}\n\nPlease manually create a summary of the document.`;
+    // Generate summary using Ollama (local AI without API keys)
+    const summary = await generateSummary(text, requirement || '', language || 'English');
 
     // Save to Supabase Summary bucket
     const summaryFileName = `summaries/${documentName}.txt`;

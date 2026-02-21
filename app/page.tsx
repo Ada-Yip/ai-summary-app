@@ -52,22 +52,41 @@ export default function Home() {
 
     setDeletingFile(fileName);
     try {
-      const res = await fetch('/api/documents/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: `documents/${fileName}` }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setStatus(`Document "${fileName}" deleted successfully`);
-        fetchFiles(); // Refresh the list
-      } else {
-        setStatus(`Error deleting document: ${data.error}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      try {
+        const res = await fetch('/api/documents/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: `documents/${fileName}` }),
+          signal: controller.signal,
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          setStatus(`Document "${fileName}" deleted successfully`);
+          // Add a small delay before refreshing to ensure the delete is processed
+          setTimeout(() => fetchFiles(), 300);
+        } else {
+          setStatus(`Error deleting document: ${data.error || 'Unknown error'}`);
+          setDeletingFile(null);
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === 'AbortError') {
+          setStatus(`Error deleting document: Request timed out`);
+        } else {
+          setStatus(`Error deleting document: ${err}`);
+        }
+        setDeletingFile(null);
+      } finally {
+        clearTimeout(timeoutId);
       }
     } catch (error) {
       setStatus(`Error deleting document: ${error}`);
+      setDeletingFile(null);
     }
-    setDeletingFile(null);
   }
 
   // Load files on component mount
