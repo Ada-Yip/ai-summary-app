@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { usePreferences } from "@/lib/usePreferences";
 
 export default function SummaryPage() {
   const params = useParams();
   const name = params.name as string;
+  const { preferences, isLoaded, updateLanguage, updateSummaryRequirement } = usePreferences();
+  
   const [documentText, setDocumentText] = useState("");
   const [requirement, setRequirement] = useState("");
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState("");
   const [summary, setSummary] = useState("");
   const [existingSummary, setExistingSummary] = useState("");
   const [editing, setEditing] = useState(false);
@@ -16,6 +19,14 @@ export default function SummaryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatingNew, setGeneratingNew] = useState(false);
+
+  // Initialize language and requirement from preferences
+  useEffect(() => {
+    if (isLoaded) {
+      setLanguage(preferences.language || "en");
+      setRequirement(preferences.summaryRequirement || "");
+    }
+  }, [isLoaded, preferences]);
 
   // Load existing summary on mount
   useEffect(() => {
@@ -32,7 +43,7 @@ export default function SummaryPage() {
           setSummary(data.summary);
         }
       } catch (err) {
-        console.log("No existing summary found");
+        // No existing summary found
       }
     }
     loadExistingSummary();
@@ -210,7 +221,10 @@ export default function SummaryPage() {
             </label>
             <textarea
               value={requirement}
-              onChange={e => setRequirement(e.target.value)}
+              onChange={e => {
+                setRequirement(e.target.value);
+                updateSummaryRequirement(e.target.value);
+              }}
               placeholder="Enter any specific requirements for the summary..."
               style={{
                 width: '100%',
@@ -237,7 +251,10 @@ export default function SummaryPage() {
             </label>
             <select
               value={language}
-              onChange={e => setLanguage(e.target.value)}
+              onChange={e => {
+                setLanguage(e.target.value);
+                updateLanguage(e.target.value);
+              }}
               style={{
                 width: '100%',
                 padding: '0.75rem',

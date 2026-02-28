@@ -1,19 +1,30 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { usePreferences } from "@/lib/usePreferences";
 
 export default function SummaryPage() {
   const params = useParams();
   const name = params.name as string;
+  const { preferences, isLoaded, updateLanguage, updateSummaryRequirement } = usePreferences();
+  
   const [text, setText] = useState("");
   const [requirement, setRequirement] = useState("");
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState("");
   const [summary, setSummary] = useState("");
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Initialize language and requirement from preferences
+  useEffect(() => {
+    if (isLoaded) {
+      setLanguage(preferences.language || "en");
+      setRequirement(preferences.summaryRequirement || "");
+    }
+  }, [isLoaded, preferences]);
 
   async function handleGenerate() {
     setLoading(true);
@@ -79,14 +90,20 @@ export default function SummaryPage() {
         <label style={{ fontWeight: 'bold', marginRight: 8 }}>摘要需求：</label>
         <input 
           value={requirement} 
-          onChange={e => setRequirement(e.target.value)} 
+          onChange={e => {
+            setRequirement(e.target.value);
+            updateSummaryRequirement(e.target.value);
+          }} 
           style={{ marginRight: 8 }}
           disabled={loading}
         />
         <label style={{ fontWeight: 'bold', marginRight: 8 }}>語言：</label>
         <select 
           value={language} 
-          onChange={e => setLanguage(e.target.value)}
+          onChange={e => {
+            setLanguage(e.target.value);
+            updateLanguage(e.target.value);
+          }}
           disabled={loading}
         >
           <option value="en">English</option>

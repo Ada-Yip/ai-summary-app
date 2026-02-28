@@ -39,7 +39,7 @@ Test the app in your local development environment, then deploy the app to Verce
 
 **Steps with major screenshots:**
 
-1. Choose an AI summarization API (e.g., OpenAI, Cohere, or Hugging Face).
+1. Choose an AI summarization API (e.g., Groq AI, Cohere, or Hugging Face).
 2. Securely store your API keys (use environment variables, never commit keys to GitHub).
 3. Add a UI for users to select and submit documents for summarization.
 4. Implement backend logic to send document content to the AI API and receive summaries.

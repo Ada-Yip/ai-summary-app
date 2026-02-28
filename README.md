@@ -1,13 +1,13 @@
 # Document Summary App
 
-An AI-powered document management and summarization application built with Next.js. Upload documents (TXT or PDF), generate intelligent summaries using OpenAI, edit summaries, and manage all your documents securely in Supabase.
+An AI-powered document management and summarization application built with Next.js. Upload documents (TXT or PDF), generate intelligent summaries using Groq AI, edit summaries, and manage all your documents securely in Supabase.
 
 ## Features
 
 - **Document Upload**: Support for TXT and PDF files (up to 50MB each)
 - **Document Viewing**: Display and read uploaded documents in the browser
 - **PDF Text Extraction**: Automatically extract text from PDF files
-- **AI-Powered Summaries**: Generate summaries using OpenAI GPT-3.5-turbo
+- **AI-Powered Summaries**: Generate summaries using Groq AI
 - **Custom Requirements**: Specify custom instructions for summary generation
 - **Multi-Language Support**: Generate summaries in English, Chinese, or Japanese
 - **Summary Editing**: Edit and save generated summaries
@@ -20,7 +20,6 @@ An AI-powered document management and summarization application built with Next.
 ### Prerequisites
 - Node.js 16+
 - Supabase account (free at https://supabase.com)
-- OpenAI API key (https://openai.com/api)
 
 ### Installation
 
@@ -38,7 +37,7 @@ npm install
 3. Set up environment variables:
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your Supabase and OpenAI credentials
+# Edit .env.local with your Supabase and Groq credentials
 ```
 
 4. Run the development server:
@@ -75,7 +74,7 @@ app/
 - **Frontend**: Next.js 16, React 19, TailwindCSS
 - **Backend**: Next.js API Routes
 - **Storage**: Supabase Object Storage
-- **AI**: OpenAI GPT-3.5-turbo
+- **AI**: Groq AI
 - **PDF Processing**: pdf-parse
 - **Language**: TypeScript
 
@@ -116,7 +115,6 @@ Required environment variables (copy from `.env.example`):
 ```env
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 NEXT_PUBLIC_SUPABASE_KEY=<your-supabase-key>
-OPENAI_API_KEY=<your-openai-key>
 ```
 
 ## API Endpoints

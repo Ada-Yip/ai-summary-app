@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-The Document Summary App is a Next.js application that enables users to upload documents (TXT and PDF), generate AI-powered summaries using OpenAI, edit summaries, and manage their documents. All data is securely stored in Supabase cloud storage.
+The Document Summary App is a Next.js application that enables users to upload documents (TXT and PDF), generate AI-powered summaries using Groq AI, edit summaries, and manage their documents. All data is securely stored in Supabase cloud storage.
 
 ## Application Architecture
 
@@ -42,7 +42,7 @@ api/
 │       └── route.ts         # POST - Extract text from PDF
 └── summary/
     ├── generate/
-    │   └── route.ts         # POST - Generate summary using OpenAI
+    │   └── route.ts         # POST - Generate summary using Groq AI
     ├── update/
     │   └── route.ts         # POST - Update/save edited summary
     └── get/
@@ -60,7 +60,6 @@ api/
 └─────────────────┘
 
 ┌─────────────────┐
-│   OpenAI        │
 ├─────────────────┤
 │  GPT-3.5-turbo  │ ← Generate summaries
 └─────────────────┘
@@ -117,7 +116,7 @@ Frontend fetches document text
     ↓
 Build prompt with language and requirement
     ↓
-Call OpenAI API (gpt-3.5-turbo)
+Call Groq AI API
     ↓
 Save summary to Supabase Summary bucket
     ↓
@@ -178,7 +177,6 @@ Refresh document list
 - Easy authentication if needed in future
 - Reliable and scalable infrastructure
 
-### Why OpenAI?
 - State-of-the-art language models
 - GPT-3.5-turbo offers good balance of cost and quality
 - Easy-to-use API
@@ -205,7 +203,7 @@ Refresh document list
 - Graceful error handling for corrupted PDFs
 
 ### 3. AI Summary Generation
-- Uses OpenAI GPT-3.5-turbo
+- Uses Groq AI
 - Supports multiple output languages (English, Chinese, Japanese)
 - Allows custom requirements in prompt
 - Temperature set to 0.7 for balanced creativity
@@ -326,12 +324,10 @@ The app uses React's built-in state management with `useState` and `useEffect` h
 # Development
 NEXT_PUBLIC_SUPABASE_URL=dev-url
 NEXT_PUBLIC_SUPABASE_KEY=dev-key
-OPENAI_API_KEY=dev-key
 
 # Production
 NEXT_PUBLIC_SUPABASE_URL=prod-url
 NEXT_PUBLIC_SUPABASE_KEY=prod-key
-OPENAI_API_KEY=prod-key
 ```
 
 ### Deployment Platforms
@@ -398,8 +394,6 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL         # Supabase project URL
 NEXT_PUBLIC_SUPABASE_KEY          # Supabase anon key
 
-# Required (OpenAI)
-OPENAI_API_KEY                    # OpenAI API secret key
 ```
 
 Note: `NEXT_PUBLIC_*` prefix makes variables available on client side. Keep API keys server-side only.
@@ -422,7 +416,6 @@ npm run build
 ### API Connection Issues
 - Verify environment variables are set correctly
 - Check Supabase bucket names (case-sensitive)
-- Verify OpenAI API key has available credits
 - Check network connectivity
 
 ### File Upload Issues
@@ -448,4 +441,3 @@ For more information, see:
 - [TESTING.md](./TESTING.md) - Testing checklist
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Supabase Documentation](https://supabase.com/docs)
-- [OpenAI Documentation](https://platform.openai.com/docs)

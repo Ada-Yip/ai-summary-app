@@ -45,29 +45,23 @@ export default function DocumentPage() {
             clearTimeout(timeoutId);
           }
         } else {
-          // TXT file: get public URL and fetch content with timeout
+          // TXT file: download content directly from API with timeout
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout for entire TXT operation
           
           try {
-            const urlRes = await fetch(`/api/documents/get-url`, {
+            const res = await fetch(`/api/documents/download`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ path: `documents/${name}` }),
               signal: controller.signal,
             });
             
-            const urlData = await urlRes.json();
-            if (urlRes.ok && urlData.publicUrl) {
-              const txtRes = await fetch(urlData.publicUrl, { signal: controller.signal });
-              if (txtRes.ok) {
-                const txt = await txtRes.text();
-                setText(txt);
-              } else {
-                setError("Failed to download file");
-              }
+            const data = await res.json();
+            if (res.ok && data.text) {
+              setText(data.text);
             } else {
-              setError(urlData.error || "Failed to load file");
+              setError(data.error || "Failed to download file");
             }
           } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') {
