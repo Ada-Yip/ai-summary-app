@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import ReactMarkdown from 'react-markdown';
 import { usePreferences } from "@/lib/usePreferences";
+import type { Components } from 'react-markdown';
+import type { HeadingProps, CodeProps } from 'react-markdown/lib/ast-to-react';
 
 interface DocumentFile {
   name: string;
@@ -649,21 +651,65 @@ export default function Home() {
                   color: '#1f2937'
                 }}>
                   <ReactMarkdown
-                    components={{
-                      h1: ({ node, ...props }) => <h1 style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: 'bold' }} {...props} />,
-                      h2: ({ node, ...props }) => <h2 style={{ marginTop: '0.75rem', marginBottom: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold' }} {...props} />,
-                      h3: ({ node, ...props }) => <h3 style={{ marginTop: '0.75rem', marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 'bold' }} {...props} />,
-                      p: ({ node, ...props }) => <p style={{ margin: '0.5rem 0' }} {...props} />,
-                      ul: ({ node, ordered, ...props }) => <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }} {...props} />,
-                      ol: ({ node, ordered, ...props }) => <ol style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }} {...props} />,
-                      li: ({ node, ordered, ...props }) => <li style={{ margin: '0.25rem 0' }} {...props} />,
-                      strong: ({ node, ...props }) => <strong style={{ fontWeight: 'bold' }} {...props} />,
-                      em: ({ node, ...props }) => <em style={{ fontStyle: 'italic' }} {...props} />,
-                      code: ({ node, ...props }) => <code style={{ backgroundColor: '#f3f4f6', padding: '0.25rem 0.5rem', borderRadius: '3px', fontFamily: 'monospace', fontSize: '0.85em' }} {...props} />,
-                    }}
-                  >
-                    {textToMarkdown(documentDetails[expandedFile]?.text || "")}
-                  </ReactMarkdown>
+  components={{
+    h1: (props: any) => {
+      const { node, children, ...rest } = props;
+      return <h1 style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: 'bold' }} {...rest}>{children}</h1>;
+    },
+    h2: (props: any) => {
+      const { node, children, ...rest } = props;
+      return <h2 style={{ marginTop: '0.75rem', marginBottom: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold' }} {...rest}>{children}</h2>;
+    },
+    h3: (props: any) => {
+      const { node, children, ...rest } = props;
+      return <h3 style={{ marginTop: '0.75rem', marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 'bold' }} {...rest}>{children}</h3>;
+    },
+    p: (props: any) => {
+      const { node, children, ...rest } = props;
+      return <p style={{ margin: '0.5rem 0' }} {...rest}>{children}</p>;
+    },
+    ul: (props: any) => {
+      const { node, ordered, children, ...rest } = props;
+      return <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }} {...rest}>{children}</ul>;
+    },
+    ol: (props: any) => {
+      const { node, ordered, children, ...rest } = props;
+      return <ol style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }} {...rest}>{children}</ol>;
+    },
+    li: (props: any) => {
+      const { node, ordered, children, ...rest } = props;
+      return <li style={{ margin: '0.25rem 0' }} {...rest}>{children}</li>;
+    },
+    strong: (props: any) => {
+      const { node, children, ...rest } = props;
+      return <strong style={{ fontWeight: 'bold' }} {...rest}>{children}</strong>;
+    },
+    em: (props: any) => {
+      const { node, children, ...rest } = props;
+      return <em style={{ fontStyle: 'italic' }} {...rest}>{children}</em>;
+    },
+    code: (props: any) => {
+      const { node, inline, className, children, ...rest } = props;
+      return (
+        <code 
+          style={{ 
+            backgroundColor: '#f3f4f6', 
+            padding: inline ? '0.25rem 0.5rem' : '0.5rem',
+            borderRadius: '3px', 
+            fontFamily: 'monospace', 
+            fontSize: '0.85em',
+            display: inline ? 'inline' : 'block'
+          }} 
+          {...rest}
+        >
+          {children}
+        </code>
+      );
+    },
+  }}
+>
+  {textToMarkdown(documentDetails[expandedFile]?.text || "")}
+</ReactMarkdown>
                 </div>
               ) : (
                 <div style={{
