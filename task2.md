@@ -24,6 +24,10 @@ Test the app in your local development environment, then deploy the app to Verce
 9. Test uploading, listing, and deleting files locally.
 10. Deploy your app to Vercel and verify file management works.
 
+<img width="2736" height="1728" alt="螢幕擷取畫面 2026-02-28 201313" src="https://github.com/user-attachments/assets/b0306cca-45c9-4b0f-ab0d-15a7459f40e6" />
+<img width="2736" height="1728" alt="螢幕擷取畫面 2026-02-28 201326" src="https://github.com/user-attachments/assets/96aecf86-3f7d-4af6-9bcc-d08bad221782" />
+
+
 
 ## Section 7: AI Summary for documents
 **Requirements:**  
